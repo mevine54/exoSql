@@ -1,0 +1,158 @@
+1. JOINTURES (JOINS)
+Les jointures permettent de relier des tables en fonction d'une ou plusieurs colonnes communes.
+
+A) INNER JOIN
+L'INNER JOIN renvoie les lignes où il y a une correspondance dans les deux tables. Si aucune correspondance n'est trouvée, la ligne ne sera pas renvoyée.
+
+Exemple 1 : Récupérer les noms des clients et leurs commandes.
+Supposons deux tables :
+
+clients (id_client, nom)
+commandes (id_commande, id_client, produit)
+sql
+Copier le code
+SELECT clients.nom, commandes.produit
+FROM clients
+INNER JOIN commandes ON clients.id_client = commandes.id_client;
+Cela va retourner seulement les clients qui ont des commandes.
+
+Exemple 2 : Récupérer les employés et leurs départements.
+Deux tables :
+
+employes (id_employe, nom, id_departement)
+departements (id_departement, nom_departement)
+sql
+Copier le code
+SELECT employes.nom, departements.nom_departement
+FROM employes
+INNER JOIN departements ON employes.id_departement = departements.id_departement;
+B) LEFT JOIN (ou LEFT OUTER JOIN)
+Le LEFT JOIN renvoie toutes les lignes de la table de gauche (première table), même si aucune correspondance n'est trouvée dans la table de droite. Si aucune correspondance n'existe, les valeurs de la table de droite seront nulles.
+
+Exemple 1 : Récupérer tous les clients, même ceux sans commande.
+sql
+Copier le code
+SELECT clients.nom, commandes.produit
+FROM clients
+LEFT JOIN commandes ON clients.id_client = commandes.id_client;
+Tous les clients seront affichés, même ceux qui n'ont pas de commandes (leurs produits seront affichés comme NULL).
+
+Exemple 2 : Récupérer tous les départements et les employés associés.
+sql
+Copier le code
+SELECT departements.nom_departement, employes.nom
+FROM departements
+LEFT JOIN employes ON departements.id_departement = employes.id_departement;
+Tous les départements seront affichés, même ceux qui n'ont pas d'employés.
+
+C) RIGHT JOIN (ou RIGHT OUTER JOIN)
+Le RIGHT JOIN renvoie toutes les lignes de la table de droite (deuxième table), même si aucune correspondance n'est trouvée dans la table de gauche.
+
+Exemple 1 : Récupérer toutes les commandes, même si certains clients n'existent plus.
+sql
+Copier le code
+SELECT clients.nom, commandes.produit
+FROM clients
+RIGHT JOIN commandes ON clients.id_client = commandes.id_client;
+Cela affiche toutes les commandes, même si certaines n'ont plus de client associé (le nom du client sera NULL).
+
+Exemple 2 : Récupérer tous les employés, même s'ils ne sont pas assignés à un département.
+sql
+Copier le code
+SELECT departements.nom_departement, employes.nom
+FROM employes
+RIGHT JOIN departements ON employes.id_departement = departements.id_departement;
+Tous les employés sont affichés, même ceux qui ne sont pas assignés à un département (le nom du département sera NULL).
+
+D) FULL OUTER JOIN
+Le FULL OUTER JOIN renvoie toutes les lignes lorsqu'il y a une correspondance dans l'une des deux tables. Si une ligne n'a pas de correspondance dans l'autre table, les valeurs manquantes seront NULL.
+
+Exemple 1 : Récupérer tous les clients et toutes les commandes, même s'ils ne sont pas liés.
+sql
+Copier le code
+SELECT clients.nom, commandes.produit
+FROM clients
+FULL OUTER JOIN commandes ON clients.id_client = commandes.id_client;
+Affiche tous les clients et toutes les commandes, même s'ils ne sont pas liés.
+
+Exemple 2 : Récupérer tous les départements et tous les employés, même si l'un ou l'autre n'a pas de correspondance.
+sql
+Copier le code
+SELECT departements.nom_departement, employes.nom
+FROM employes
+FULL OUTER JOIN departements ON employes.id_departement = departements.id_departement;
+Cela affichera tous les départements et tous les employés, même s'ils ne sont pas liés.
+
+2. Sous-requêtes (Subqueries)
+Une sous-requête est une requête SQL imbriquée à l'intérieur d'une autre requête. Elle est souvent utilisée pour extraire des informations supplémentaires nécessaires pour la requête principale.
+
+A) Sous-requête dans une clause WHERE
+On peut utiliser une sous-requête dans la clause WHERE pour filtrer les résultats de la requête principale en fonction des résultats de la sous-requête.
+
+Exemple 1 : Récupérer les clients qui ont passé au moins une commande.
+sql
+Copier le code
+SELECT nom
+FROM clients
+WHERE id_client IN (SELECT id_client FROM commandes);
+Ici, la sous-requête renvoie la liste des id_client qui ont passé des commandes.
+
+Exemple 2 : Récupérer les employés qui travaillent dans le département "Informatique".
+sql
+Copier le code
+SELECT nom
+FROM employes
+WHERE id_departement = (SELECT id_departement FROM departements WHERE nom_departement = 'Informatique');
+Ici, la sous-requête trouve l'id_departement de l'informatique et l'utilise dans la requête principale.
+
+B) Sous-requête dans la clause FROM (Tables dérivées)
+Une sous-requête dans la clause FROM est traitée comme une table temporaire.
+
+Exemple 1 : Récupérer le nombre de commandes par client.
+sql
+Copier le code
+SELECT sous_requete.nom, sous_requete.nombre_commandes
+FROM (SELECT clients.nom, COUNT(commandes.id_commande) AS nombre_commandes
+      FROM clients
+      LEFT JOIN commandes ON clients.id_client = commandes.id_client
+      GROUP BY clients.nom) AS sous_requete;
+La sous-requête calcule le nombre de commandes par client, puis la requête principale affiche ces résultats.
+
+Exemple 2 : Récupérer le salaire moyen par département et afficher uniquement ceux qui ont un salaire moyen supérieur à 5000.
+sql
+Copier le code
+SELECT sous_requete.nom_departement, sous_requete.salaire_moyen
+FROM (SELECT departements.nom_departement, AVG(employes.salaire) AS salaire_moyen
+      FROM employes
+      JOIN departements ON employes.id_departement = departements.id_departement
+      GROUP BY departements.nom_departement) AS sous_requete
+WHERE sous_requete.salaire_moyen > 5000;
+Ici, la sous-requête calcule les salaires moyens par département, et la requête principale filtre ceux qui ont un salaire moyen supérieur à 5000.
+
+3. Jointures multiples
+Parfois, il est nécessaire de joindre plus de deux tables dans une requête.
+
+Exemple 1 : Récupérer les commandes des clients et les employés qui les ont traitées.
+Tables :
+
+clients (id_client, nom)
+commandes (id_commande, id_client, id_employe, produit)
+employes (id_employe, nom)
+sql
+Copier le code
+SELECT clients.nom AS client, commandes.produit, employes.nom AS employe
+FROM commandes
+JOIN clients ON commandes.id_client = clients.id_client
+JOIN employes ON commandes.id_employe = employes.id_employe;
+Exemple 2 : Récupérer les employés, leurs départements, et les bureaux associés.
+Tables :
+
+employes (id_employe, nom, id_departement)
+departements (id_departement, nom_departement, id_bureau)
+bureaux (id_bureau, emplacement)
+sql
+Copier le code
+SELECT employes.nom, departements.nom_departement, bureaux.emplacement
+FROM employes
+JOIN departements ON employes.id_departement = departements.id_departement
+JOIN bureaux ON departements.id_bureau = bureaux.id_bureau;
